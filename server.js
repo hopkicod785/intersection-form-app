@@ -2,6 +2,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 const path = require('path');
 
 const app = express();
@@ -11,6 +12,24 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -51,24 +70,48 @@ const db = new sqlite3.Database('./form_submissions.db', (err) => {
 
 // API Routes
 
-// Submit form data
-app.post('/api/submit', (req, res) => {
+// Submit form data with file upload support
+app.post('/api/submit', upload.fields([
+    { name: 'phasingFile', maxCount: 1 },
+    { name: 'timingPlans', maxCount: 1 }
+]), (req, res) => {
     const {
         intersectionName,
         city,
         state,
         endUser,
         distributor,
+        otherDistributor,
         cabinetType,
+        otherCabinetType,
         tlsConnection,
+        otherTlsConnection,
         detectionIO,
-        phasing,
-        timingPlans
+        otherDetectionIO,
+        phasingText
     } = req.body;
 
     // Validate required fields
-    if (!intersectionName || !city || !state || !endUser || !distributor || !cabinetType || !tlsConnection) {
+    if (!intersectionName || !city || !state || !endUser || !distributor || !cabinetType || !tlsConnection || !detectionIO) {
         return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Handle "Other" fields
+    const finalDistributor = distributor === 'Other' ? otherDistributor : distributor;
+    const finalCabinetType = cabinetType === 'Other' ? otherCabinetType : cabinetType;
+    const finalTlsConnection = tlsConnection === 'Other' ? otherTlsConnection : tlsConnection;
+    const finalDetectionIO = detectionIO === 'Other' ? otherDetectionIO : detectionIO;
+
+    // Handle phasing (text or file)
+    let phasing = phasingText || '';
+    if (req.files && req.files.phasingFile && req.files.phasingFile[0]) {
+        phasing = phasing ? `${phasing} | File: ${req.files.phasingFile[0].filename}` : `File: ${req.files.phasingFile[0].filename}`;
+    }
+    
+    // Handle timing plans (file)
+    let timingPlansInfo = '';
+    if (req.files && req.files.timingPlans && req.files.timingPlans[0]) {
+        timingPlansInfo = `File: ${req.files.timingPlans[0].filename}`;
     }
 
     const sql = `INSERT INTO submissions (
@@ -77,8 +120,8 @@ app.post('/api/submit', (req, res) => {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     db.run(sql, [
-        intersectionName, city, state, endUser, distributor,
-        cabinetType, tlsConnection, detectionIO || '', phasing || '', timingPlans || ''
+        intersectionName, city, state, endUser, finalDistributor,
+        finalCabinetType, finalTlsConnection, finalDetectionIO, phasing, timingPlansInfo
     ], function(err) {
         if (err) {
             console.error('Database error:', err.message);
@@ -318,56 +361,103 @@ function getInlineFormHTML() {
         
         <form id="preInstallForm" class="space-y-4">
             <div>
-                <label for="intersectionName" class="block text-sm font-medium text-gray-700">Intersection Name *</label>
+                <label for="intersectionName" class="block text-sm font-medium text-gray-700">Intersection Name</label>
                 <input type="text" id="intersectionName" name="intersectionName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Main St & 1st Ave">
             </div>
             <div>
-                <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
+                <label for="city" class="block text-sm font-medium text-gray-700">City</label>
                 <input type="text" id="city" name="city" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Springfield">
             </div>
             <div>
-                <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
+                <label for="state" class="block text-sm font-medium text-gray-700">State</label>
                 <input type="text" id="state" name="state" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., IL">
             </div>
             <div>
-                <label for="endUser" class="block text-sm font-medium text-gray-700">End-User *</label>
+                <label for="endUser" class="block text-sm font-medium text-gray-700">End-User</label>
                 <input type="text" id="endUser" name="endUser" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., City Traffic Department">
             </div>
             <div>
-                <label for="distributor" class="block text-sm font-medium text-gray-700">Distributor *</label>
-                <input type="text" id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., ABC Traffic Solutions">
-            </div>
-            <div>
-                <label for="cabinetType" class="block text-sm font-medium text-gray-700">Cabinet Type *</label>
-                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    <option value="" disabled selected>Select Cabinet Type</option>
-                    <option value="Type 170">Type 170</option>
-                    <option value="Type 2070">Type 2070</option>
-                    <option value="NEMA">NEMA</option>
+                <label for="distributor" class="block text-sm font-medium text-gray-700">Distributor</label>
+                <select id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('distributor', 'otherDistributor')">
+                    <option value="" disabled selected>Select Distributor</option>
+                    <option value="Orange Traffic">Orange Traffic</option>
+                    <option value="General Highway Products">General Highway Products</option>
+                    <option value="Texas Highway Products">Texas Highway Products</option>
+                    <option value="General Traffic Controls">General Traffic Controls</option>
+                    <option value="Traffic Signal Controls">Traffic Signal Controls</option>
+                    <option value="Traffic Control Corp.">Traffic Control Corp.</option>
+                    <option value="HighAngle">HighAngle</option>
+                    <option value="Marlin">Marlin</option>
+                    <option value="Utilicom">Utilicom</option>
+                    <option value="TAPCO">TAPCO</option>
+                    <option value="Swarco">Swarco</option>
+                    <option value="JTB">JTB</option>
+                    <option value="Southwest Traffic Systems">Southwest Traffic Systems</option>
+                    <option value="Transportation Solutions & Lighting">Transportation Solutions & Lighting</option>
+                    <option value="Blackstar">Blackstar</option>
+                    <option value="ITS">ITS</option>
+                    <option value="CTC">CTC</option>
+                    <option value="Paradigm">Paradigm</option>
                     <option value="Other">Other</option>
                 </select>
+                <input type="text" id="otherDistributor" name="otherDistributor" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other distributor">
             </div>
             <div>
-                <label for="tlsConnection" class="block text-sm font-medium text-gray-700">TLS Connection *</label>
-                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    <option value="" disabled selected>Select TLS Connection</option>
-                    <option value="Ethernet">Ethernet</option>
-                    <option value="Serial">Serial</option>
-                    <option value="Fiber">Fiber</option>
-                    <option value="None">None</option>
+                <label for="cabinetType" class="block text-sm font-medium text-gray-700">Cabinet Type</label>
+                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('cabinetType', 'otherCabinetType')">
+                    <option value="" disabled selected>Select Cabinet Type</option>
+                    <option value="NEMA TS 1">NEMA TS 1</option>
+                    <option value="NEMA TS 2">NEMA TS 2</option>
+                    <option value="332">332</option>
+                    <option value="335">335</option>
+                    <option value="325i ATC">325i ATC</option>
+                    <option value="336">336</option>
+                    <option value="332D">332D</option>
+                    <option value="ATC">ATC</option>
+                    <option value="Type B">Type B</option>
+                    <option value="ITS">ITS</option>
+                    <option value="P44">P44</option>
+                    <option value="Other">Other</option>
                 </select>
+                <input type="text" id="otherCabinetType" name="otherCabinetType" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other cabinet type">
+            </div>
+            <div>
+                <label for="tlsConnection" class="block text-sm font-medium text-gray-700">TLS Connection</label>
+                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('tlsConnection', 'otherTlsConnection')">
+                    <option value="" disabled selected>Select TLS Connection</option>
+                    <option value="NTCIP">NTCIP</option>
+                    <option value="SDLC">SDLC</option>
+                    <option value="C1/C4 Harness">C1/C4 Harness</option>
+                    <option value="DB25 Spade Cables">DB25 Spade Cables</option>
+                    <option value="None">None</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="otherTlsConnection" name="otherTlsConnection" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other TLS connection">
             </div>
             <div>
                 <label for="detectionIO" class="block text-sm font-medium text-gray-700">Detection I/O</label>
-                <textarea id="detectionIO" name="detectionIO" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 8 vehicle detectors, 4 pedestrian inputs"></textarea>
+                <select id="detectionIO" name="detectionIO" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('detectionIO', 'otherDetectionIO')">
+                    <option value="" disabled selected>Select Detection I/O</option>
+                    <option value="DB37 to Spades">DB37 to Spades</option>
+                    <option value="SDLC - 15 PIN">SDLC - 15 PIN</option>
+                    <option value="SDLC - 25/15 PIN">SDLC - 25/15 PIN</option>
+                    <option value="NTCIP">NTCIP</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="otherDetectionIO" name="otherDetectionIO" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other detection I/O">
             </div>
             <div>
-                <label for="phasing" class="block text-sm font-medium text-gray-700">Phasing</label>
-                <textarea id="phasing" name="phasing" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+                <label class="block text-sm font-medium text-gray-700">Phasing</label>
+                <div class="mt-1 space-y-2">
+                    <label for="phasingText" class="block text-sm text-gray-600">Enter Phasing Details</label>
+                    <textarea id="phasingText" name="phasingText" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+                    <label for="phasingFile" class="block text-sm text-gray-600">Or Upload Phasing File</label>
+                    <input type="file" id="phasingFile" name="phasingFile" accept=".pdf,.doc,.docx,.txt" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
             </div>
             <div>
-                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans</label>
-                <textarea id="timingPlans" name="timingPlans" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., AM Peak, PM Peak, Off-Peak"></textarea>
+                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans (File Upload)</label>
+                <input type="file" id="timingPlans" name="timingPlans" accept=".pdf,.doc,.docx,.txt" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
             <div class="flex justify-end">
                 <button type="submit" id="submitBtn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -380,8 +470,20 @@ function getInlineFormHTML() {
             </div>
         </form>
     </div>
-
     <script>
+        function toggleOtherField(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            if (select.value === 'Other') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+
         document.getElementById('preInstallForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -401,26 +503,12 @@ function getInlineFormHTML() {
             messageContainer.classList.add('hidden');
             
             // Collect form data
-            const formData = {
-                intersectionName: document.getElementById('intersectionName').value,
-                city: document.getElementById('city').value,
-                state: document.getElementById('state').value,
-                endUser: document.getElementById('endUser').value,
-                distributor: document.getElementById('distributor').value,
-                cabinetType: document.getElementById('cabinetType').value,
-                tlsConnection: document.getElementById('tlsConnection').value,
-                detectionIO: document.getElementById('detectionIO').value,
-                phasing: document.getElementById('phasing').value,
-                timingPlans: document.getElementById('timingPlans').value
-            };
+            const formData = new FormData(this);
             
             try {
                 const response = await fetch('/api/submit', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
+                    body: formData
                 });
                 
                 const result = await response.json();
