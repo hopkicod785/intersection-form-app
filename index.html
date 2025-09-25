@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Install Registration Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Pre-Install Registration Form</h2>
+        <form id="preInstallForm" class="space-y-4">
+            <div>
+                <label for="intersectionName" class="block text-sm font-medium text-gray-700">Intersection Name</label>
+                <input type="text" id="intersectionName" name="intersectionName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Main St & 1st Ave">
+            </div>
+            <div>
+                <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                <input type="text" id="city" name="city" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Springfield">
+            </div>
+            <div>
+                <label for="state" class="block text-sm font-medium text-gray-700">State</label>
+                <input type="text" id="state" name="state" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., IL">
+            </div>
+            <div>
+                <label for="endUser" class="block text-sm font-medium text-gray-700">End-User</label>
+                <input type="text" id="endUser" name="endUser" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., City Traffic Department">
+            </div>
+            <div>
+                <label for="distributor" class="block text-sm font-medium text-gray-700">Distributor</label>
+                <input type="text" id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., ABC Traffic Solutions">
+            </div>
+            <div>
+                <label for="cabinetType" class="block text-sm font-medium text-gray-700">Cabinet Type</label>
+                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="" disabled selected>Select Cabinet Type</option>
+                    <option value="Type 170">Type 170</option>
+                    <option value="Type 2070">Type 2070</option>
+                    <option value="NEMA">NEMA</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label for="tlsConnection" class="block text-sm font-medium text-gray-700">TLS Connection</label>
+                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="" disabled selected>Select TLS Connection</option>
+                    <option value="Ethernet">Ethernet</option>
+                    <option value="Serial">Serial</option>
+                    <option value="Fiber">Fiber</option>
+                    <option value="None">None</option>
+                </select>
+            </div>
+            <div>
+                <label for="detectionIO" class="block text-sm font-medium text-gray-700">Detection I/O</label>
+                <textarea id="detectionIO" name="detectionIO" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 8 vehicle detectors, 4 pedestrian inputs"></textarea>
+            </div>
+            <div>
+                <label for="phasing" class="block text-sm font-medium text-gray-700">Phasing</label>
+                <textarea id="phasing" name="phasing" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+            </div>
+            <div>
+                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans</label>
+                <textarea id="timingPlans" name="timingPlans" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., AM Peak, PM Peak, Off-Peak"></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Submit</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.getElementById('preInstallForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Form submitted successfully!');
+            // Add form submission logic here (e.g., send data to a server)
+        });
+    </script>
+</body>
+</html>
