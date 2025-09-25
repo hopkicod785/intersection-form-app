@@ -9,7 +9,18 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
         <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Pre-Install Registration Form</h2>
-        <form id="preInstallForm" class="space-y-4">
+        
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="hidden mb-4 p-4 rounded-md">
+            <div id="successMessage" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                <span id="successText"></span>
+            </div>
+            <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <span id="errorText"></span>
+            </div>
+        </div>
+        
+        <form id="preInstallForm" class="space-y-4" enctype="multipart/form-data">
             <div>
                 <label for="intersectionName" class="block text-sm font-medium text-gray-700">Intersection Name</label>
                 <input type="text" id="intersectionName" name="intersectionName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Main St & 1st Ave">
@@ -28,50 +39,172 @@
             </div>
             <div>
                 <label for="distributor" class="block text-sm font-medium text-gray-700">Distributor</label>
-                <input type="text" id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., ABC Traffic Solutions">
+                <select id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('distributor', 'otherDistributor')">
+                    <option value="" disabled selected>Select Distributor</option>
+                    <option value="Orange Traffic">Orange Traffic</option>
+                    <option value="General Highway Products">General Highway Products</option>
+                    <option value="Texas Highway Products">Texas Highway Products</option>
+                    <option value="General Traffic Controls">General Traffic Controls</option>
+                    <option value="Traffic Signal Controls">Traffic Signal Controls</option>
+                    <option value="Traffic Control Corp.">Traffic Control Corp.</option>
+                    <option value="HighAngle">HighAngle</option>
+                    <option value="Marlin">Marlin</option>
+                    <option value="Utilicom">Utilicom</option>
+                    <option value="TAPCO">TAPCO</option>
+                    <option value="Swarco">Swarco</option>
+                    <option value="JTB">JTB</option>
+                    <option value="Southwest Traffic Systems">Southwest Traffic Systems</option>
+                    <option value="Transportation Solutions & Lighting">Transportation Solutions & Lighting</option>
+                    <option value="Blackstar">Blackstar</option>
+                    <option value="ITS">ITS</option>
+                    <option value="CTC">CTC</option>
+                    <option value="Paradigm">Paradigm</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="otherDistributor" name="otherDistributor" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other distributor">
             </div>
             <div>
                 <label for="cabinetType" class="block text-sm font-medium text-gray-700">Cabinet Type</label>
-                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('cabinetType', 'otherCabinetType')">
                     <option value="" disabled selected>Select Cabinet Type</option>
-                    <option value="Type 170">Type 170</option>
-                    <option value="Type 2070">Type 2070</option>
-                    <option value="NEMA">NEMA</option>
+                    <option value="NEMA TS 1">NEMA TS 1</option>
+                    <option value="NEMA TS 2">NEMA TS 2</option>
+                    <option value="332">332</option>
+                    <option value="335">335</option>
+                    <option value="325i ATC">325i ATC</option>
+                    <option value="336">336</option>
+                    <option value="332D">332D</option>
+                    <option value="ATC">ATC</option>
+                    <option value="Type B">Type B</option>
+                    <option value="ITS">ITS</option>
+                    <option value="P44">P44</option>
                     <option value="Other">Other</option>
                 </select>
+                <input type="text" id="otherCabinetType" name="otherCabinetType" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other cabinet type">
             </div>
             <div>
                 <label for="tlsConnection" class="block text-sm font-medium text-gray-700">TLS Connection</label>
-                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('tlsConnection', 'otherTlsConnection')">
                     <option value="" disabled selected>Select TLS Connection</option>
-                    <option value="Ethernet">Ethernet</option>
-                    <option value="Serial">Serial</option>
-                    <option value="Fiber">Fiber</option>
+                    <option value="NTCIP">NTCIP</option>
+                    <option value="SDLC">SDLC</option>
+                    <option value="C1/C4 Harness">C1/C4 Harness</option>
+                    <option value="DB25 Spade Cables">DB25 Spade Cables</option>
                     <option value="None">None</option>
+                    <option value="Other">Other</option>
                 </select>
+                <input type="text" id="otherTlsConnection" name="otherTlsConnection" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other TLS connection">
             </div>
             <div>
                 <label for="detectionIO" class="block text-sm font-medium text-gray-700">Detection I/O</label>
-                <textarea id="detectionIO" name="detectionIO" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 8 vehicle detectors, 4 pedestrian inputs"></textarea>
+                <select id="detectionIO" name="detectionIO" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" onchange="toggleOtherField('detectionIO', 'otherDetectionIO')">
+                    <option value="" disabled selected>Select Detection I/O</option>
+                    <option value="DB37 to Spades">DB37 to Spades</option>
+                    <option value="SDLC - 15 PIN">SDLC - 15 PIN</option>
+                    <option value="SDLC - 25/15 PIN">SDLC - 25/15 PIN</option>
+                    <option value="NTCIP">NTCIP</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="otherDetectionIO" name="otherDetectionIO" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm hidden" placeholder="Specify other detection I/O">
             </div>
             <div>
-                <label for="phasing" class="block text-sm font-medium text-gray-700">Phasing</label>
-                <textarea id="phasing" name="phasing" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+                <label class="block text-sm font-medium text-gray-700">Phasing</label>
+                <div class="mt-1 space-y-2">
+                    <label for="phasingText" class="block text-sm text-gray-600">Enter Phasing Details</label>
+                    <textarea id="phasingText" name="phasingText" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+                    <label for="phasingFile" class="block text-sm text-gray-600">Or Upload Phasing File</label>
+                    <input type="file" id="phasingFile" name="phasingFile" accept=".pdf,.doc,.docx,.txt" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
             </div>
             <div>
-                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans</label>
-                <textarea id="timingPlans" name="timingPlans" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., AM Peak, PM Peak, Off-Peak"></textarea>
+                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans (File Upload)</label>
+                <input type="file" id="timingPlans" name="timingPlans" accept=".pdf,.doc,.docx,.txt" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Submit</button>
+                <button type="submit" id="submitBtn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Submit</span>
+                    <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
             </div>
         </form>
     </div>
     <script>
-        document.getElementById('preInstallForm').addEventListener('submit', function(event) {
+        function toggleOtherField(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            if (select.value === 'Other') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+        document.getElementById('preInstallForm').addEventListener('submit', async function(event) {
             event.preventDefault();
-            alert('Form submitted successfully!');
-            // Add form submission logic here (e.g., send data to a server)
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const messageContainer = document.getElementById('messageContainer');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const successText = document.getElementById('successText');
+            const errorText = document.getElementById('errorText');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Submitting...';
+            submitSpinner.classList.remove('hidden');
+            messageContainer.classList.add('hidden');
+            
+            // Collect form data
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    successText.textContent = result.message;
+                    successMessage.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    messageContainer.classList.remove('hidden');
+                    
+                    // Reset form
+                    document.getElementById('preInstallForm').reset();
+                    
+                    // Scroll to top to show message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // Show error message
+                    errorText.textContent = result.error || 'An error occurred while submitting the form';
+                    errorMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                    messageContainer.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorText.textContent = 'Network error. Please check your connection and try again.';
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+                messageContainer.classList.remove('hidden');
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Submit';
+                submitSpinner.classList.add('hidden');
+            }
         });
     </script>
 </body>
