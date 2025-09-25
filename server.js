@@ -11,7 +11,13 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Debug: Log the public directory path
+console.log('Public directory path:', path.join(__dirname, 'public'));
+console.log('Files in public directory:', require('fs').readdirSync(path.join(__dirname, 'public')));
 
 // Initialize SQLite database
 const db = new sqlite3.Database('./form_submissions.db', (err) => {
@@ -224,12 +230,37 @@ app.delete('/api/submissions/:id', (req, res) => {
 
 // Serve the main form page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Error loading form page');
+        }
+    });
 });
 
 // Serve the admin dashboard
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+    const adminPath = path.join(__dirname, 'public', 'admin.html');
+    console.log('Serving admin.html from:', adminPath);
+    res.sendFile(adminPath, (err) => {
+        if (err) {
+            console.error('Error serving admin.html:', err);
+            res.status(500).send('Error loading admin page');
+        }
+    });
+});
+
+// Fallback for any other routes - serve the main form
+app.get('*', (req, res) => {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving fallback index.html:', err);
+            res.status(500).send('Error loading page');
+        }
+    });
 });
 
 // Start server
