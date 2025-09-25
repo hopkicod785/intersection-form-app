@@ -15,9 +15,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Debug: Log the public directory path
-console.log('Public directory path:', path.join(__dirname, 'public'));
-console.log('Files in public directory:', require('fs').readdirSync(path.join(__dirname, 'public')));
+// Debug: Log the public directory path (with error handling)
+const publicPath = path.join(__dirname, 'public');
+console.log('Public directory path:', publicPath);
+try {
+    const files = require('fs').readdirSync(publicPath);
+    console.log('Files in public directory:', files);
+} catch (err) {
+    console.log('Public directory not found, will create it if needed');
+}
 
 // Initialize SQLite database
 const db = new sqlite3.Database('./form_submissions.db', (err) => {
@@ -232,24 +238,40 @@ app.delete('/api/submissions/:id', (req, res) => {
 app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, 'public', 'index.html');
     console.log('Serving index.html from:', indexPath);
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('Error serving index.html:', err);
-            res.status(500).send('Error loading form page');
-        }
-    });
+    
+    // Check if file exists, if not serve inline HTML
+    const fs = require('fs');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath, (err) => {
+            if (err) {
+                console.error('Error serving index.html:', err);
+                res.status(500).send('Error loading form page');
+            }
+        });
+    } else {
+        console.log('index.html not found, serving inline HTML');
+        res.send(getInlineFormHTML());
+    }
 });
 
 // Serve the admin dashboard
 app.get('/admin', (req, res) => {
     const adminPath = path.join(__dirname, 'public', 'admin.html');
     console.log('Serving admin.html from:', adminPath);
-    res.sendFile(adminPath, (err) => {
-        if (err) {
-            console.error('Error serving admin.html:', err);
-            res.status(500).send('Error loading admin page');
-        }
-    });
+    
+    // Check if file exists, if not serve inline HTML
+    const fs = require('fs');
+    if (fs.existsSync(adminPath)) {
+        res.sendFile(adminPath, (err) => {
+            if (err) {
+                console.error('Error serving admin.html:', err);
+                res.status(500).send('Error loading admin page');
+            }
+        });
+    } else {
+        console.log('admin.html not found, serving inline HTML');
+        res.send(getInlineAdminHTML());
+    }
 });
 
 // Fallback for any other routes - serve the main form
@@ -269,6 +291,291 @@ app.listen(PORT, () => {
     console.log(`Form available at: http://localhost:${PORT}`);
     console.log(`Admin dashboard at: http://localhost:${PORT}/admin`);
 });
+
+// Inline HTML functions for fallback
+function getInlineFormHTML() {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Install Registration Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Pre-Install Registration Form</h2>
+        
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="hidden mb-4 p-4 rounded-md">
+            <div id="successMessage" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                <span id="successText"></span>
+            </div>
+            <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <span id="errorText"></span>
+            </div>
+        </div>
+        
+        <form id="preInstallForm" class="space-y-4">
+            <div>
+                <label for="intersectionName" class="block text-sm font-medium text-gray-700">Intersection Name *</label>
+                <input type="text" id="intersectionName" name="intersectionName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Main St & 1st Ave">
+            </div>
+            <div>
+                <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
+                <input type="text" id="city" name="city" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Springfield">
+            </div>
+            <div>
+                <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
+                <input type="text" id="state" name="state" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., IL">
+            </div>
+            <div>
+                <label for="endUser" class="block text-sm font-medium text-gray-700">End-User *</label>
+                <input type="text" id="endUser" name="endUser" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., City Traffic Department">
+            </div>
+            <div>
+                <label for="distributor" class="block text-sm font-medium text-gray-700">Distributor *</label>
+                <input type="text" id="distributor" name="distributor" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., ABC Traffic Solutions">
+            </div>
+            <div>
+                <label for="cabinetType" class="block text-sm font-medium text-gray-700">Cabinet Type *</label>
+                <select id="cabinetType" name="cabinetType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="" disabled selected>Select Cabinet Type</option>
+                    <option value="Type 170">Type 170</option>
+                    <option value="Type 2070">Type 2070</option>
+                    <option value="NEMA">NEMA</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label for="tlsConnection" class="block text-sm font-medium text-gray-700">TLS Connection *</label>
+                <select id="tlsConnection" name="tlsConnection" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="" disabled selected>Select TLS Connection</option>
+                    <option value="Ethernet">Ethernet</option>
+                    <option value="Serial">Serial</option>
+                    <option value="Fiber">Fiber</option>
+                    <option value="None">None</option>
+                </select>
+            </div>
+            <div>
+                <label for="detectionIO" class="block text-sm font-medium text-gray-700">Detection I/O</label>
+                <textarea id="detectionIO" name="detectionIO" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 8 vehicle detectors, 4 pedestrian inputs"></textarea>
+            </div>
+            <div>
+                <label for="phasing" class="block text-sm font-medium text-gray-700">Phasing</label>
+                <textarea id="phasing" name="phasing" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., 4-phase, 8-phase, etc."></textarea>
+            </div>
+            <div>
+                <label for="timingPlans" class="block text-sm font-medium text-gray-700">Timing Plans</label>
+                <textarea id="timingPlans" name="timingPlans" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., AM Peak, PM Peak, Off-Peak"></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" id="submitBtn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">Submit</span>
+                    <svg id="submitSpinner" class="hidden animate-spin -mr-1 ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('preInstallForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const messageContainer = document.getElementById('messageContainer');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const successText = document.getElementById('successText');
+            const errorText = document.getElementById('errorText');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Submitting...';
+            submitSpinner.classList.remove('hidden');
+            messageContainer.classList.add('hidden');
+            
+            // Collect form data
+            const formData = {
+                intersectionName: document.getElementById('intersectionName').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                endUser: document.getElementById('endUser').value,
+                distributor: document.getElementById('distributor').value,
+                cabinetType: document.getElementById('cabinetType').value,
+                tlsConnection: document.getElementById('tlsConnection').value,
+                detectionIO: document.getElementById('detectionIO').value,
+                phasing: document.getElementById('phasing').value,
+                timingPlans: document.getElementById('timingPlans').value
+            };
+            
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    successText.textContent = result.message;
+                    successMessage.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    messageContainer.classList.remove('hidden');
+                    
+                    // Reset form
+                    document.getElementById('preInstallForm').reset();
+                    
+                    // Scroll to top to show message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // Show error message
+                    errorText.textContent = result.error || 'An error occurred while submitting the form';
+                    errorMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                    messageContainer.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorText.textContent = 'Network error. Please check your connection and try again.';
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+                messageContainer.classList.remove('hidden');
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Submit';
+                submitSpinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>`;
+}
+
+function getInlineAdminHTML() {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Form Submissions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8" x-data="adminDashboard()">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-800">Form Submissions Dashboard</h1>
+                <div class="flex space-x-4">
+                    <a href="/" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">View Form</a>
+                    <button @click="refreshData()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Loading submissions...</p>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <span x-text="error"></span>
+        </div>
+
+        <!-- Submissions Table -->
+        <div x-show="!loading && !error" class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intersection</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City/State</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distributor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cabinet Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TLS</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="submission in submissions" :key="submission.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="submission.id"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="submission.intersection_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="\`\${submission.city}, \${submission.state}\`"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="submission.end_user"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="submission.distributor"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="submission.cabinet_type"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="submission.tls_connection"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(submission.submitted_at)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                submissions: [],
+                loading: false,
+                error: null,
+
+                init() {
+                    this.loadSubmissions();
+                },
+
+                async loadSubmissions() {
+                    this.loading = true;
+                    this.error = null;
+                    
+                    try {
+                        const response = await fetch('/api/submissions');
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.submissions = data.submissions || [];
+                        } else {
+                            this.error = data.error || 'Failed to load submissions';
+                        }
+                    } catch (error) {
+                        this.error = 'Network error. Please check your connection.';
+                        console.error('Error loading submissions:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                refreshData() {
+                    this.loadSubmissions();
+                },
+
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleString();
+                }
+            }
+        }
+    </script>
+</body>
+</html>`;
+}
 
 // Graceful shutdown
 process.on('SIGINT', () => {
